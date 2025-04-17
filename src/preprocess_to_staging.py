@@ -7,6 +7,7 @@ import joblib
 from collections import OrderedDict
 from sklearn.preprocessing import LabelEncoder
 from numba import njit
+from botocore.exceptions import ClientError
 
 
 @njit
@@ -65,6 +66,14 @@ def split_data_func(family_accession, class_encoded, test_ratio=0.33, dev_ratio=
             np.array(test_indices, dtype=np.int64))
 
 
+def ensure_bucket_exists(s3, bucket_name):
+    try:
+        s3.head_bucket(Bucket=bucket_name)
+    except ClientError:
+        s3.create_bucket(Bucket=bucket_name)
+        print(f"Created bucket '{bucket_name}'.")
+
+
 def preprocess_to_staging(bucket_raw, bucket_staging, input_file, output_prefix):
     """
     Preprocesses data from the raw bucket and uploads preprocessed data splits to the staging bucket.
@@ -83,7 +92,16 @@ def preprocess_to_staging(bucket_raw, bucket_staging, input_file, output_prefix)
     input_file (str): Name of the input file in the raw bucket.
     output_prefix (str): Prefix for the preprocessed output files in the staging bucket.
     """
-    s3 = boto3.client('s3', endpoint_url='http://localhost:4566')
+
+    s3 = boto3.client('s3', 
+                    endpoint_url='http://localhost:4566',
+                    aws_access_key_id='root',
+                    aws_secret_access_key='root',
+                    region_name='us-east-1',
+                    )
+    
+    ensure_bucket_exists(s3, bucket_raw)
+    ensure_bucket_exists(s3, bucket_staging)
 
     # Step 1: Download raw data
     response = s3.get_object(Bucket=bucket_raw, Key=input_file)
@@ -168,6 +186,14 @@ def preprocess_to_staging(bucket_raw, bucket_staging, input_file, output_prefix)
 if __name__ == "__main__":
     import argparse
 
+    import sys
+    sys.argv = [
+        "preprocess_to_staging.py",
+        "--bucket_raw", "raw",
+        "--bucket_staging", "staging",
+        "--input_file", "./Data-Lakes-tp2-student/data/raw/combined_raw.csv",
+        "--output_prefix", "preprocessed", 
+    ]
     parser = argparse.ArgumentParser(description="Preprocess data from raw to staging bucket")
     parser.add_argument("--bucket_raw", type=str, required=True, help="Name of the raw S3 bucket")
     parser.add_argument("--bucket_staging", type=str, required=True, help="Name of the staging S3 bucket")

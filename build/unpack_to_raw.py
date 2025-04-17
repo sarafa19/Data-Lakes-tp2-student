@@ -19,7 +19,6 @@ def unpack_data(input_dir, bucket_name, output_file_name):
                     aws_access_key_id='root',
                     aws_secret_access_key='root',
                     region_name='us-east-1',
-                    default_output='json'
                     )
 
     try:

@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import boto3
+from botocore.exceptions import ClientError
 
 
 def unpack_data(input_dir, bucket_name, output_file_name):
@@ -13,7 +14,21 @@ def unpack_data(input_dir, bucket_name, output_file_name):
     bucket_name (str): Name of the S3 bucket to upload the combined file to.
     output_file_name (str): Name of the combined CSV file to be uploaded to S3.
     """
-    s3 = boto3.client('s3', endpoint_url='http://localhost:4566')
+    s3 = boto3.client('s3', 
+                    endpoint_url='http://localhost:4566',
+                    aws_access_key_id='root',
+                    aws_secret_access_key='root',
+                    region_name='us-east-1',
+                    default_output='json'
+                    )
+
+    try:
+        s3.head_bucket(Bucket=bucket_name)
+        print(f"Bucket '{bucket_name}' already exists.")
+    except ClientError:
+        s3.create_bucket(Bucket=bucket_name)
+        print(f"Created bucket '{bucket_name}'.")
+
     data_frames = []
 
     # Iterate through train, test, and dev subfolders
@@ -37,7 +52,7 @@ def unpack_data(input_dir, bucket_name, output_file_name):
         print("All files combined successfully.")
 
         # Save the combined data to a CSV file
-        tmp_dir = "C:/tmp"
+        tmp_dir = "./Data-Lakes-tp2-student/data/raw"
         os.makedirs(tmp_dir, exist_ok=True)
         combined_csv_path = os.path.join(tmp_dir, output_file_name)
         combined_data.to_csv(combined_csv_path, index=False)

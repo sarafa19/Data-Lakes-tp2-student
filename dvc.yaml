@@ -7,7 +7,7 @@ stages:
   unpack:
     cmd: python build/unpack_to_raw.py --input_dir ./data/raw --bucket_name raw --output_file_name combined_raw.csv
     deps:
-      - src/unpack_data.py
+      - build/unpack_to_raw.py
       - data/raw/train
       - data/raw/test
       - data/raw/dev

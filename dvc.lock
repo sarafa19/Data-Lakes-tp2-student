@@ -2,8 +2,17 @@ schema: '2.0'
 stages:
   start_localstack:
     cmd: bash scripts/start_localstack.sh
-    outs:
-    - path: localstack_running.log
-      hash: md5
-      md5: 58393a92ddd8225eb2f7449a8ab123bb
-      size: 71
+  unpack:
+    cmd: python build/unpack_to_raw.py --input_dir ./data/raw --bucket_name raw --output_file_name
+      combined_raw.csv
+  preprocess:
+    cmd: python src/preprocess_to_staging.py --bucket_raw raw --bucket_staging staging
+      --input_file combined_raw.csv --output_prefix preprocessed
+  process:
+    cmd:
+    - python src/process_to_curated.py --bucket_staging staging --bucket_curated curated
+      --input_file preprocessed_train.csv --output_file tokenized_train.csv
+    - python src/process_to_curated.py --bucket_staging staging --bucket_curated curated
+      --input_file preprocessed_test.csv --output_file tokenized_test.csv
+    - python src/process_to_curated.py --bucket_staging staging --bucket_curated curated
+      --input_file preprocessed_dev.csv --output_file tokenized_dev.csv

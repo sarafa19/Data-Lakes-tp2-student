@@ -5,5 +5,5 @@ stages:
     outs:
     - path: localstack_running.log
       hash: md5
-      md5: 5383819e9b814e20c76309f2169fa006
+      md5: 58393a92ddd8225eb2f7449a8ab123bb
       size: 71

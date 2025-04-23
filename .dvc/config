@@ -3,3 +3,9 @@
 ['remote "localstack-s3"']
     url = s3://raw
     endpointurl = http://localhost:4566
+['remote "staging"']
+    url = s3://staging
+    endpointurl = http://localhost:4566
+['remote "curated"']
+    url = s3://curated
+    endpointurl = http://localhost:4566

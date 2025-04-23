@@ -5,7 +5,7 @@ stages:
       - localstack_running.log  # Track the state of the container to ensure this stage runs only when needed
 
   unpack:
-    cmd: python build/unpack_to_raw.py --input_dir ./data/raw --bucket_name raw --output_file_name combined_raw.csv
+    cmd: python build/unpack_to_raw.py --input_dir ./data/raw --bucket_name raw --output_file_name combined_raw.csv --localstack
     deps:
       - build/unpack_to_raw.py
       - data/raw/train
@@ -15,7 +15,7 @@ stages:
       - s3://raw/combined_raw.csv
 
   preprocess:
-    cmd: python src/preprocess_to_staging.py --bucket_raw raw --bucket_staging staging --input_file combined_raw.csv --output_prefix preprocessed
+    cmd: python src/preprocess_to_staging.py --bucket_raw raw --bucket_staging staging --input_file combined_raw.csv --output_prefix preprocessed --localstack
     deps:
       - src/preprocess_to_staging.py
       - s3://raw/combined_raw.csv
@@ -26,9 +26,9 @@ stages:
 
   process:
     cmd: 
-      - python src/process_to_curated.py --bucket_staging staging --bucket_curated curated --input_file preprocessed_train.csv --output_file tokenized_train.csv
-      - python src/process_to_curated.py --bucket_staging staging --bucket_curated curated --input_file preprocessed_test.csv --output_file tokenized_test.csv
-      - python src/process_to_curated.py --bucket_staging staging --bucket_curated curated --input_file preprocessed_dev.csv --output_file tokenized_dev.csv
+      - python src/process_to_curated.py --bucket_staging staging --bucket_curated curated --input_file preprocessed_train.csv --output_file tokenized_train.csv --localstack
+      - python src/process_to_curated.py --bucket_staging staging --bucket_curated curated --input_file preprocessed_test.csv --output_file tokenized_test.csv --localstack
+      - python src/process_to_curated.py --bucket_staging staging --bucket_curated curated --input_file preprocessed_dev.csv --output_file tokenized_dev.csv --localstack
     deps:
       - src/process_to_curated.py
       - s3://staging/preprocessed_train.csv

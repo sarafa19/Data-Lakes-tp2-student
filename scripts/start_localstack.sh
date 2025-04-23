@@ -13,3 +13,6 @@ else
         docker run -d -p 4566:4566 -p 4572:4572 --name localstack localstack/localstack
     fi
 fi
+
+# Then DVC
+echo "LocalStack started or already running at $(date)" > localstack_running.log

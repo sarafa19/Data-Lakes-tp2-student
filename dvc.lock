@@ -1,0 +1,9 @@
+schema: '2.0'
+stages:
+  start_localstack:
+    cmd: bash scripts/start_localstack.sh
+    outs:
+    - path: localstack_running.log
+      hash: md5
+      md5: 5383819e9b814e20c76309f2169fa006
+      size: 71

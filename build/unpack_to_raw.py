@@ -75,7 +75,7 @@ if __name__ == "__main__":
     import sys
     sys.argv = [
         "unpack_data.py",
-        "--input_dir", "./Data-Lakes-tp2-student/data/raw",
+        "--input_dir", "./data/raw",
         "--bucket_name", "raw",
         "--output_file_name", "combined_raw.csv", 
     ]

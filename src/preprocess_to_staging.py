@@ -10,7 +10,7 @@ from numba import njit
 from botocore.exceptions import ClientError
 
 
-@njit
+#@njit
 def split_data_func(family_accession, class_encoded, test_ratio=0.33, dev_ratio=0.33):
     """
     Splits data into train, dev, and test indices based on unique classes.
@@ -24,46 +24,54 @@ def split_data_func(family_accession, class_encoded, test_ratio=0.33, dev_ratio=
     Returns:
     (np.ndarray, np.ndarray, np.ndarray): Indices for train, dev, and test sets.
     """
+    max_samples = len(family_accession)
+    train_indices = np.empty(max_samples, dtype=np.int64)
+    dev_indices = np.empty(max_samples, dtype=np.int64)
+    test_indices = np.empty(max_samples, dtype=np.int64)
+
+    train_count = 0
+    dev_count = 0
+    test_count = 0
+
     unique_classes = np.unique(family_accession)
-    train_indices = []
-    dev_indices = []
-    test_indices = []
 
-    num_classes = len(unique_classes)
 
-    for cls in unique_classes:
-        # Find indices for this class
-        print(f"Handling class {cls} out of {num_classes}")
-        class_data_indices = np.where(family_accession == cls)[0]
-        count = len(class_data_indices)
+    for i in range(len(unique_classes)):
+        cls = unique_classes[i]
+        print(f"Processing class {i + 1}/{len(unique_classes)} (label: {cls})")
+        class_indices = np.where(family_accession == cls)[0]
+        count = len(class_indices)
 
-        # Handle edge cases based on the number of instances
         if count == 1:
-            test_indices.extend(class_data_indices)
+            test_indices[test_count:test_count+1] = class_indices
+            test_count += 1
         elif count == 2:
-            dev_indices.extend(class_data_indices[:1])
-            test_indices.extend(class_data_indices[1:])
+            dev_indices[dev_count:dev_count+1] = class_indices[0:1]
+            test_indices[test_count:test_count+1] = class_indices[1:2]
+            dev_count += 1
+            test_count += 1
         elif count == 3:
-            train_indices.append(class_data_indices[0])
-            dev_indices.append(class_data_indices[1])
-            test_indices.append(class_data_indices[2])
+            train_indices[train_count:train_count+1] = class_indices[0:1]
+            dev_indices[dev_count:dev_count+1] = class_indices[1:2]
+            test_indices[test_count:test_count+1] = class_indices[2:3]
+            train_count += 1
+            dev_count += 1
+            test_count += 1
         else:
-            # Random shuffle
-            randomized_indices = np.random.permutation(class_data_indices)
+            shuffled = np.random.permutation(class_indices)
             num_test = int(count * test_ratio)
             num_dev = int((count - num_test) * dev_ratio)
+            num_train = count - num_test - num_dev
 
-            test_part = randomized_indices[:num_test]
-            dev_part = randomized_indices[num_test:num_test + num_dev]
-            train_part = randomized_indices[num_test + num_dev:]
+            test_indices[test_count:test_count+num_test] = shuffled[0:num_test]
+            dev_indices[dev_count:dev_count+num_dev] = shuffled[num_test:num_test+num_dev]
+            train_indices[train_count:train_count+num_train] = shuffled[num_test+num_dev:]
 
-            train_indices.extend(train_part)
-            dev_indices.extend(dev_part)
-            test_indices.extend(test_part)
+            test_count += num_test
+            dev_count += num_dev
+            train_count += num_train
 
-    return (np.array(train_indices, dtype=np.int64),
-            np.array(dev_indices, dtype=np.int64),
-            np.array(test_indices, dtype=np.int64))
+    return (train_indices[:train_count], dev_indices[:dev_count], test_indices[:test_count])
 
 
 def ensure_bucket_exists(s3, bucket_name):
@@ -191,7 +199,7 @@ if __name__ == "__main__":
         "preprocess_to_staging.py",
         "--bucket_raw", "raw",
         "--bucket_staging", "staging",
-        "--input_file", "./Data-Lakes-tp2-student/data/raw/combined_raw.csv",
+        "--input_file", "combined_raw.csv",
         "--output_prefix", "preprocessed", 
     ]
     parser = argparse.ArgumentParser(description="Preprocess data from raw to staging bucket")

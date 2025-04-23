@@ -68,8 +68,6 @@ def unpack_data(input_dir, bucket_name, output_file_name):
     print(f"Deleted local file: {combined_csv_path}")
 
 
-
-
 if __name__ == "__main__":
     import argparse
     print('Script started')
